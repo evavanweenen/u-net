@@ -14,6 +14,7 @@ Adjust hyper-parameters in `config.py`
 * Loss function is a combination of Focal loss (with parameters `GAMMA` and `ALPHA`) and the (soft) Dice loss, where `WEIGHT` is the contribution of the Dice loss to the total loss function.
 * Hyperparameters are optimized through a grid-search over `PARAM_GRID` with `K`-fold cross-validation, split based on patient ID.
 
+## References
 [1] O. Ronneberger, P. Fischer, and  T. Brox. U-net: Convolutional networks for biomedical imagesegmentation. In Medical Image Computing andComputer-Assisted Intervention – MICCAI 2015,pages 234–241, 2015
 
 [2] P. Rawla, T. Sunkara, and A. Barsouk. Epidemiology of colorectal cancer: incidence, mortality, survival,and risk factors.Prz Gastroenterol, 14(2):89–103,2019
