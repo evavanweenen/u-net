@@ -5,12 +5,8 @@ as part of the https://decathlon-10.grand-challenge.org/ task 10
 ## Introduction
 Colon cancer is a disease that is diagnosed in over 1 million people in the world population every year and is one of the deadliest cancers [2]. To aid physicians in monitoring its presence, we use Convolutional Neural Networks to automatically detect the presence, size and location of tumors in the colon from Computer Tomography (CT) imaging.
 
-<object data="https://github.com/evavanweenen/u-net/blob/main/architecture.pdf" type="application/pdf" width="700px" height="700px">
-    <embed src="https://github.com/evavanweenen/u-net/blob/main/architecture.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/evavanweenen/u-net/blob/main/architecture.pdf">Download PDF</a>.</p>
-    </embed>
-</object>
-
+## Architecture overview (2D)
+![alt text](https://github.com/evavanweenen/u-net/blob/main/architecture.png)
 
 ## Instructions
 Adjust hyper-parameters in `config.py`
