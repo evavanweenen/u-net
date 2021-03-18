@@ -50,10 +50,21 @@ class CTDataset(Dataset):
 	- it is reshaped to (channels x height x width)
 	- it is converted to a pytorch Tensor
 	"""
-	def __init__(self, path, normalize=False):
+	def __init__(self, path, normalize=False, sort=False):
 		self.path = path
 		self.normalize = normalize
 		self.files = np.array(os.listdir(self.path))
+
+		# list of patient IDs for each image in self.path (useful for child classes)
+		self.index = pd.DataFrame([f.lstrip('colon_').rstrip('.npy').split('_') for f in self.files], columns=['patient', 'slice'])
+
+		if sort:
+			# create sorted list of (patient, slice)
+			self.index = self.index.astype({'slice':int})
+			self.index = self.index.sort_values(['patient', 'slice']).reset_index(drop=True)
+
+			# get filelist according to sorted index
+			self.files = self.index.apply(lambda x: 'colon_%s_%s.npy'%(x[0], x[1]), axis=1)
 
 	def __len__(self):
 		return len(self.files)
@@ -84,30 +95,22 @@ class CTDatasetSplit(CTDataset):
 	It adjusts the file list (self.files), so that it only containsfiles
 	 from the specific split (train or val) for the specific fold (k)
 	"""
-	def __init__(self, path, split:str, k, K=5, normalize=False):
+	def __init__(self, path, split:str, k, K=5, normalize=False, sort=False):
 		super().__init__(path, normalize)
 
 		self.split = 0 if split == 'train' else (1 if split == 'val' else 2)
-		self.folds = self.get_folds(K)
-
-		self.files = self.files[self.folds[k][self.split]]
-
-	def get_folds(self, K):
-		# list of patient IDs for each image in self.path
-		index = pd.DataFrame([x.lstrip('colon_').rstrip('.npy').split('_') for x in self.files], columns=['patient', 'slice'])
+		
 		# list indices for the training and validation set for K folds
-		folds = list(GroupKFold(K).split(self.files, groups=index.patient))
-		return folds
+		self.folds = list(GroupKFold(K).split(self.files, groups=self.index.patient))
 
-class CTDataset3DList(CTDataset):
-	def __init__(self, path, normalize=False):
-		super().__init__(path, normalize)
+		# get fileslist for fold k and split
+		self.files = self.files[self.folds[k][self.split]]
+		self.index = self.index.loc[self.folds[k][self.split]]
+		
+		if sort:
+			# create sorted list of (patient, slice)
+			self.index = self.index.astype({'slice':int})
+			self.index = self.index.sort_values(['patient', 'slice']).reset_index(drop=True)
 
-		# create sorted list of (patient, slice)
-		self.slicelist = [f.lstrip('colon_').rstrip('.npy').split('_') for f in sorted(self.files)]
-		self.slicelist = pd.DataFrame(np.array(self.slicelist), columns=['patient', 'slice'])
-		self.slicelist = self.slicelist.astype({'slice':int})
-		self.slicelist = self.slicelist.sort_values(['patient', 'slice']).reset_index(drop=True)
-
-		# sort filelist according to slicelist
-		self.files = self.slicelist.apply(lambda x: 'colon_%s_%s.npy'%(x[0], x[1]), axis=1)
+			# get filelist according to sorted index
+			self.files = self.index.apply(lambda x: 'colon_%s_%s.npy'%(x[0], x[1]), axis=1)
