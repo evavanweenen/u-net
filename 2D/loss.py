@@ -6,8 +6,6 @@ from torchvision.ops import sigmoid_focal_loss
 
 import numpy as np
 
-from skimage.filters import threshold_otsu
-
 class FocalLoss(nn.modules.loss._WeightedLoss):
 	""" 
 	Focal Loss as described by https://arxiv.org/1708.02002 
@@ -41,13 +39,14 @@ class DiceScore(nn.Module):
 	If the reduction is none, the score for each sample is returned.
 	If the reduction is mean, the score is averaged by the batch size.
 	"""
-	def __init__(self, smooth=1, reduction='mean', soft=False, dim=2):
+	def __init__(self, smooth=1, reduction='mean', soft=False, dim=2, threshold=.5):
 		super(DiceScore, self).__init__()
 		self.smooth = smooth
 		self.reduction = reduction
 		self.soft = soft
 		self.dim = dim
 		self.aggdim = tuple(-np.arange(1,self.dim+1))
+		self.threshold = threshold
 
 	def forward(self, output, target):
 		""" Calculate DiceScore for each item in batch """
@@ -55,12 +54,7 @@ class DiceScore(nn.Module):
 
 		# binarize
 		if not self.soft:
-			if self.dim == 2: # 2D images
-				thresh = [threshold_otsu(o) for o in output.cpu().detach().numpy()]
-				output = torch.stack([(output[i] > t).float() for i, t in enumerate(thresh)])
-			elif self.dim == 3: # 3D images
-				thresh = threshold_otsu(output.cpu().detach().numpy())
-				output = (output > thresh).float()
+			output = (output > self.threshold).float()
 
 		intersection = (output * target).sum(dim=self.aggdim)
 
@@ -81,24 +75,20 @@ class IoUScore(nn.Module):
 	If the reduction is none, the score for each sample is returned.
 	If the reduction is mean, the score is averaged by the batch size.
 	"""
-	def __init__(self, smooth=1, reduction='mean', dim=2):
+	def __init__(self, smooth=1, reduction='mean', dim=2, threshold=.5):
 		super(IoUScore, self).__init__()
 		self.smooth = smooth
 		self.reduction = reduction
 		self.dim = dim
 		self.aggdim = tuple(-np.arange(1,self.dim+1))
+		self.threshold = threshold
 
 	def forward(self, output, target):
 		""" Calculate IoU for each item in batch """
 		output = torch.sigmoid(output)
-		
+
 		# binarize
-		if self.dim == 2: # 2D images
-			thresh = [threshold_otsu(o) for o in output.cpu().detach().numpy()]
-			output = torch.stack([(output[i] > t).float() for i, t in enumerate(thresh)])
-		elif self.dim == 3: # 3D images
-			thresh = threshold_otsu(output.cpu().detach().numpy())
-			output = (output > thresh).float()
+		output = (output > self.threshold).float()
 
 		intersection = (output * target).sum(dim=self.aggdim)
 		union = (output + target).sum(dim=self.aggdim) - intersection
@@ -120,7 +110,7 @@ class FocalDiceLoss(nn.Module):
 	If the reduction is none, the loss for each sample is returned.
 	If the reduction is mean, the loss is averaged by the batch size.
 	"""
-	def __init__(self, weight, alpha=1, gamma=2, reduction='mean', smooth=1, soft=True, dim=2):
+	def __init__(self, weight, alpha=1, gamma=2, reduction='mean', smooth=1, soft=True, dim=2, threshold=.5):
 		super(FocalDiceLoss, self).__init__()
 		self.weight = weight
 		self.gamma = gamma
@@ -129,8 +119,9 @@ class FocalDiceLoss(nn.Module):
 		self.smooth = smooth
 		self.soft = soft
 		self.dim = dim
+		self.threshold = threshold
 
 	def forward(self, output, target):
 		FL = FocalLoss(self.alpha, self.gamma, self.reduction)(output, target)
-		DL = 1 - DiceScore(self.smooth, self.reduction, self.soft, self.dim)(output, target)
+		DL = 1 - DiceScore(self.smooth, self.reduction, self.soft, self.dim, self.threshold)(output, target)
 		return FL + self.weight * DL
