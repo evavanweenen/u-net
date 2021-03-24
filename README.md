@@ -9,9 +9,19 @@ Colon cancer is a disease that is diagnosed in over 1 million people in the worl
 The data consists of 3D CT scans of people with colon cancer, as described in [3], as well as their associated segmentation masks. We consider the 3D images to be batches of 2D images, and for this purpose use a 2D U-Net [1]. To save time during training, we filter out the 2D images with a zero segmentation mask, and split images into folds using their patient ID to avoid data leakage.
 
 ## Architecture overview (2D)
-We use a 2D U-Net, for which the architecture can be viewed underneath. This is a model that takes as input 2D images, and as output 2D segmentation masks. 
+We use a 2D U-Net, for which the architecture can be viewed underneath. This is a model that takes as input 2D images, and as output 2D segmentation masks. Underneath a schematic overview of the architecture. 
 ![alt text](https://github.com/evavanweenen/u-net/blob/main/architecture.png)
+
 Examples of predictions can be viewed underneath. Note that the output is the prediction *before* applying a sigmoid function and classification threshold.
+
+| *Input* | *Output* | *Target* |
+|:--:|:--:|:--:| 
+| <img src="https://github.com/evavanweenen/u-net/blob/main/samples/colon_009_56_inputs.png" width="200"/> | <img src="https://github.com/evavanweenen/u-net/blob/main/samples/colon_009_56_output.png" width="200"/> | <img src="https://github.com/evavanweenen/u-net/blob/main/samples/colon_009_56_target.png" width="200"/> |
+| <img src="https://github.com/evavanweenen/u-net/blob/main/samples/colon_022_37_inputs.png" width="200"/> | <img src="https://github.com/evavanweenen/u-net/blob/main/samples/colon_022_37_output.png" width="200"/> | <img src="https://github.com/evavanweenen/u-net/blob/main/samples/colon_022_37_target.png" width="200"/> |
+| <img src="https://github.com/evavanweenen/u-net/blob/main/samples/colon_038_21_inputs.png" width="200"/> | <img src="https://github.com/evavanweenen/u-net/blob/main/samples/colon_038_21_output.png" width="200"/> | <img src="https://github.com/evavanweenen/u-net/blob/main/samples/colon_038_21_target.png" width="200"/> |
+| <img src="https://github.com/evavanweenen/u-net/blob/main/samples/colon_045_48_inputs.png" width="200"/> | <img src="https://github.com/evavanweenen/u-net/blob/main/samples/colon_045_48_output.png" width="200"/> | <img src="https://github.com/evavanweenen/u-net/blob/main/samples/colon_045_48_target.png" width="200"/> |
+
+Results aren't perfect, in general it predicts the tumor at the same spot of the image, so the network would definitely benefit from data augmentation in this case. 
 
 ## Instructions
 Adjust hyper-parameters in `config.py`
